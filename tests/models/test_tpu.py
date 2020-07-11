@@ -43,8 +43,8 @@ def test_model_tpu_cores_1(tmpdir):
         max_epochs=1,
         distributed_backend='tpu',
         tpu_cores=1,
-        limit_train_batches=0.4,
-        limit_val_batches=0.4,
+        limit_train_batches=10,
+        limit_val_batches=10,
     )
 
     model = EvalModelTemplate()
@@ -62,8 +62,8 @@ def test_model_tpu_index(tmpdir, tpu_core):
         max_epochs=1,
         distributed_backend='tpu',
         tpu_cores=[tpu_core],
-        limit_train_batches=0.4,
-        limit_val_batches=0.4,
+        limit_train_batches=10,
+        limit_val_batches=10,
     )
 
     model = EvalModelTemplate()
@@ -81,8 +81,8 @@ def test_model_tpu_cores_8(tmpdir):
         max_epochs=1,
         distributed_backend='tpu',
         tpu_cores=8,
-        limit_train_batches=0.4,
-        limit_val_batches=0.4,
+        limit_train_batches=10,
+        limit_val_batches=10,
     )
 
     model = EvalModelTemplate()
@@ -104,8 +104,8 @@ def test_model_16bit_tpu_cores_1(tmpdir):
         max_epochs=1,
         distributed_backend='tpu',
         tpu_cores=1,
-        limit_train_batches=0.4,
-        limit_val_batches=0.4,
+        limit_train_batches=10,
+        limit_val_batches=10,
     )
 
     model = EvalModelTemplate()
@@ -127,8 +127,8 @@ def test_model_16bit_tpu_index(tmpdir, tpu_core):
         max_epochs=1,
         distributed_backend='tpu',
         tpu_cores=[tpu_core],
-        limit_train_batches=0.4,
-        limit_val_batches=0.4,
+        limit_train_batches=10,
+        limit_val_batches=10,
     )
 
     model = EvalModelTemplate()
@@ -148,8 +148,8 @@ def test_model_16bit_tpu_cores_8(tmpdir):
         max_epochs=1,
         distributed_backend='tpu',
         tpu_cores=8,
-        limit_train_batches=0.4,
-        limit_val_batches=0.4,
+        limit_train_batches=10,
+        limit_val_batches=10,
     )
 
     model = EvalModelTemplate()
@@ -188,8 +188,8 @@ def test_tpu_grad_norm(tmpdir):
         max_epochs=1,
         distributed_backend='tpu',
         tpu_cores=1,
-        limit_train_batches=0.4,
-        limit_val_batches=0.4,
+        limit_train_batches=10,
+        limit_val_batches=10,
         gradient_clip_val=0.1,
     )
 
@@ -234,8 +234,8 @@ def test_exception_when_no_tpu_found(tmpdir):
     trainer = Trainer(
         default_root_dir=tmpdir,
         max_epochs=1,
-        train_percent_check=0.4,
-        val_percent_check=0.2,
+        train_percent_check=10,
+        val_percent_check=10,
         distributed_backend='tpu',
         tpu_cores=8,
     )
