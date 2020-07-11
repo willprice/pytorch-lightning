@@ -1056,9 +1056,9 @@ class Trainer(
 
         elif self.use_tpu:
             self.accelerator_backend = TPUBackend(self)
-            self.accelerator_backend.setup()
-            self.accelerator_backend.train(model)
-            self.accelerator_backend.teardown(model)
+            self.accelerator_backend.setup(model)
+            self.accelerator_backend.train()
+            self.accelerator_backend.teardown()
 
         else:
             self.accelerator_backend = CPUBackend(self)

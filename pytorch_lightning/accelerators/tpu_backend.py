@@ -39,7 +39,8 @@ class TPUBackend(object):
         self.start_method = None
         self.mp_queue = None
 
-    def setup(self):
+    def setup(self, model):
+        self.trainer.model = model
         rank_zero_info(f'training on {self.trainer.tpu_cores} TPU cores')
 
         if not XLA_AVAILABLE:
@@ -52,7 +53,7 @@ class TPUBackend(object):
         smp = mp.get_context(self.start_method)
         self.mp_queue = smp.SimpleQueue()
 
-    def teardown(self, model):
+    def teardown(self):
         # restore main state with best weights
         best_path = self.mp_queue.get()
         results = self.mp_queue.get()
@@ -65,28 +66,28 @@ class TPUBackend(object):
         # load last weights
         if last_path and not self.trainer.testing:
             ckpt = torch.load(last_path, map_location=lambda storage, loc: storage)
-            model.load_state_dict(ckpt)
+            self.trainer.model.load_state_dict(ckpt)
 
-        self.trainer.model = model
+        self.trainer.model = self.trainer.model
 
         # when training completes, load the weights back in main process
         self.__load_weights_on_main_process()
         return results
 
-    def train(self, model: LightningModule):
-        self.trainer.model = model
-
+    def train(self):
         if self.trainer.can_prepare_data():
-            model.prepare_data()
-            self.trainer._is_data_prepared = True
+            self.trainer.model.prepare_data()
+            self._is_data_prepared = True
+
+        self.trainer.barrier()
 
         # train
         if self.trainer.tpu_id is not None:
-            self.tpu_train_in_process(self.trainer.tpu_id, model, self.trainer, self.mp_queue)
+            self.tpu_train_in_process(self.trainer.tpu_id, self.trainer.model, self.trainer, self.mp_queue)
         else:
             xmp.spawn(
                 self.tpu_train_in_process,
-                args=(model, self.trainer, self.mp_queue),
+                args=(self.trainer.model, self.trainer, self.mp_queue),
                 nprocs=self.trainer.tpu_cores,
                 start_method=self.start_method
             )
