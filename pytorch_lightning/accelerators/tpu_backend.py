@@ -79,7 +79,7 @@ class TPUBackend(object):
             self.trainer.model.prepare_data()
             self._is_data_prepared = True
 
-        self.trainer.barrier()
+        self.trainer.barrier('prepare_data')
 
         # train
         if self.trainer.tpu_id is not None:
