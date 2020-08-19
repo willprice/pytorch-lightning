@@ -17,6 +17,7 @@ import os
 import torch
 
 from pytorch_lightning import _logger as log
+from pytorch_lightning.core import LightningModule
 from pytorch_lightning.utilities import AMPType
 from pytorch_lightning.utilities.distributed import rank_zero_only
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -123,21 +124,20 @@ class DDP2Backend(object):
             torch.cuda.set_device(self.trainer.root_gpu)
             model.cuda(self.trainer.root_gpu)
 
-        # CHOOSE OPTIMIZER
-        # allow for lr schedulers as well
-        optimizers, lr_schedulers, optimizer_frequencies = self.trainer.init_optimizers(model)
-        self.trainer.optimizers = optimizers
-        self.trainer.lr_schedulers = lr_schedulers
-        self.trainer.optimizer_frequencies = optimizer_frequencies
-
         # set model properties before going into wrapper
         self.trainer.copy_trainer_model_properties(model)
 
-        # AMP - run through amp wrapper before going to distributed DP
-        if self.trainer.amp_backend == AMPType.APEX:
-            model, optimizers = model.configure_apex(amp, model, self.trainer.optimizers, self.trainer.amp_level)
+        # CHOOSE OPTIMIZER
+        # allow for lr schedulers as well
+        if not self.trainer.testing:
+            optimizers, lr_schedulers, optimizer_frequencies = self.trainer.init_optimizers(model)
             self.trainer.optimizers = optimizers
-            self.trainer.reinit_scheduler_properties(self.trainer.optimizers, self.trainer.lr_schedulers)
+            self.trainer.lr_schedulers = lr_schedulers
+            self.trainer.optimizer_frequencies = optimizer_frequencies
+
+        # AMP - run through amp wrapper before going to distributed DDP2
+        if self.trainer.amp_backend == AMPType.APEX:
+            model = self._setup_nvidia_apex(model)
 
         # DDP2 uses all GPUs on the machine
         device_ids = self.trainer.data_parallel_device_ids
@@ -156,3 +156,13 @@ class DDP2Backend(object):
 
         # clean up memory
         torch.cuda.empty_cache()
+
+    def _setup_nvidia_apex(self, model: LightningModule):
+        optimizers = getattr(self.trainer, 'optimizers', None)
+        model, optimizers = model.configure_apex(amp, model, optimizers, self.trainer.amp_level)
+
+        if optimizers is not None:
+            self.trainer.optimizers = optimizers
+            self.trainer.reinit_scheduler_properties(self.trainer.optimizers, self.trainer.lr_schedulers)
+
+        return model

@@ -23,6 +23,7 @@ import numpy as np
 import torch
 
 from pytorch_lightning import _logger as log
+from pytorch_lightning.core import LightningModule
 from pytorch_lightning.utilities import AMPType
 from pytorch_lightning.utilities.distributed import rank_zero_only, find_free_network_port
 
@@ -195,23 +196,22 @@ class DDPBackend(object):
             torch.cuda.set_device(self.trainer.root_gpu)
             model.cuda(self.trainer.root_gpu)
 
-        # CHOOSE OPTIMIZER
-        # allow for lr schedulers as well
-        optimizers, lr_schedulers, optimizer_frequencies = self.trainer.init_optimizers(model)
-        self.trainer.optimizers = optimizers
-        self.trainer.lr_schedulers = lr_schedulers
-        self.trainer.optimizer_frequencies = optimizer_frequencies
-
         # set model properties before going into wrapper
         self.trainer.copy_trainer_model_properties(model)
 
-        # AMP - run through amp wrapper before going to distributed DP
-        if self.trainer.amp_backend == AMPType.APEX:
-            model, optimizers = model.configure_apex(amp, model, self.trainer.optimizers, self.trainer.amp_level)
+        # CHOOSE OPTIMIZER
+        # allow for lr schedulers as well
+        if not self.trainer.testing:
+            optimizers, lr_schedulers, optimizer_frequencies = self.trainer.init_optimizers(model)
             self.trainer.optimizers = optimizers
-            self.trainer.reinit_scheduler_properties(self.trainer.optimizers, self.trainer.lr_schedulers)
+            self.trainer.lr_schedulers = lr_schedulers
+            self.trainer.optimizer_frequencies = optimizer_frequencies
 
-        # DDP2 uses all GPUs on the machine
+        # AMP - run through amp wrapper before going to distributed DDP
+        if self.trainer.amp_backend == AMPType.APEX:
+            model = self._setup_nvidia_apex(model)
+
+        # DDP uses all GPUs on the machine
         if self.trainer.distributed_backend == 'ddp' or self.trainer.distributed_backend == 'ddp_spawn':
             device_ids = [self.trainer.root_gpu]
         else:  # includes ddp_cpu
@@ -241,3 +241,13 @@ class DDPBackend(object):
                 "You tried to run `.fit` or `.test` multiple times in the same script."
                 " This is not supported in DDP mode, switch to `distributed_backend='ddp_spawn'` instead."
             )
+
+    def _setup_nvidia_apex(self, model: LightningModule):
+        optimizers = getattr(self.trainer, 'optimizers', None)
+        model, optimizers = model.configure_apex(amp, model, optimizers, self.trainer.amp_level)
+
+        if optimizers is not None:
+            self.trainer.optimizers = optimizers
+            self.trainer.reinit_scheduler_properties(self.trainer.optimizers, self.trainer.lr_schedulers)
+
+        return model

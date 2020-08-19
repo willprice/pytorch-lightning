@@ -38,13 +38,15 @@ class GPUBackend(object):
 
         # CHOOSE OPTIMIZER
         # allow for lr schedulers as well
-        optimizers, lr_schedulers, optimizer_frequencies = self.trainer.init_optimizers(model)
-        self.trainer.optimizers = optimizers
-        self.trainer.lr_schedulers = lr_schedulers
-        self.trainer.optimizer_frequencies = optimizer_frequencies
-
+        if not self.trainer.testing:
+            optimizers, lr_schedulers, optimizer_frequencies = self.trainer.init_optimizers(model)
+            self.trainer.optimizers = optimizers
+            self.trainer.lr_schedulers = lr_schedulers
+            self.trainer.optimizer_frequencies = optimizer_frequencies
+        # AMP - run through amp wrapper
         if self.trainer.amp_backend == AMPType.APEX:
             model = self._setup_nvidia_apex(model)
+
         return model
 
     def train(self, model):
@@ -52,7 +54,11 @@ class GPUBackend(object):
         return results
 
     def _setup_nvidia_apex(self, model: LightningModule):
-        model, optimizers = model.configure_apex(amp, model, self.trainer.optimizers, self.trainer.amp_level)
-        self.trainer.optimizers = optimizers
-        self.trainer.reinit_scheduler_properties(self.trainer.optimizers, self.trainer.lr_schedulers)
+        optimizers = getattr(self.trainer, 'optimizers', None)
+        model, optimizers = model.configure_apex(amp, model, optimizers, self.trainer.amp_level)
+
+        if optimizers is not None:
+            self.trainer.optimizers = optimizers
+            self.trainer.reinit_scheduler_properties(self.trainer.optimizers, self.trainer.lr_schedulers)
+
         return model
