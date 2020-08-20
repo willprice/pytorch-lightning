@@ -11,7 +11,7 @@ Step-by-step walk-through
 
 This guide will walk you through the core pieces of PyTorch Lightning. 
 
-To show how Lightning works, we'll start with an MNIST classifier. We'll end showing how
+To demonstrate how Lightning works, we'll implement a simple MNIST classifier. We'll end showing how
 to use inheritance to very quickly create an AutoEncoder.
 
 .. note:: Any DL/ML PyTorch project fits into the Lightning structure. Here we just focus on 3 types
@@ -25,30 +25,35 @@ a. Less boilerplate
 ===================
 Writing code for complex deep learning research experiments tends to be... complex. Training on distributed hardware, using 16-bit percision, implementing early stopping or checkpointing requires non trivial engineering skills, could make research code get massive and make it increasingly harder to debug.
 PyTorch Lightning provides a very simple template for organizing your PyTorch code, to decouple your research code from the engineering. It leaves the core research logic to you and automates all the rest, still giving you full control over every single part.
-Writing less engineering code means iterating and prototyping much faster!
 
 b. More functionality
 =====================
-With PyTorch Lightning you can leverage code written by hundreds of AI researchers, research engs and PhDs from the world's top AI labs, implementing all the latest best practices and SOTA features such as
+With PyTorch Lightning you can leverage code written by hundreds of AI researchers, research engs and PhDs from the world's top AI labs, implementing all the latest best practices such as
 
 - GPU, Multi GPU, TPU training
 - Multi node training
+- Mixed precision
 - Auto logging
-- Gradient accumelation
-- .....
+- Auto checkpointing
+- Gradient clipping
+- Many many more!
 
 c. Less error prone
 ===================
-Why invent the wheel? Use PyTorch Lightning to enjoy a deep learning structure that is rigorously tested (500+ tests) across CPUs/multi-GPUs/multi-TPUs on every pull-request.
+PyTorch Lightning reduces the footprints of potential errors by abstracting the engineering, providing clear feedback for user errors- making it easy to get things right. 
+All the automated code is rigorously tested (500+ tests) across CPUs/multi-GPUs/multi-TPUs on every pull-request.
 
 d. No need to learn a new library
 =================================
 PyTorch Lightning is basically organized PyTorch- no need to learn a new language. Switching your model to Lightning is pretty straight forward- here's the typical PyTorch project structure organized in a LightningModule.
 
-.. figure:: https://pl-bolts-doc-images.s3.us-east-2.amazonaws.com/pt_animation_gif.gif
-   :alt: Convert from PyTorch to Lightning
+.. raw:: html
 
-As your project grows in complexity with things like 16-bit precision, distributed training, etc... the part in blue
+    <video width="800" controls autoplay src="https://pl-bolts-doc-images.s3.us-east-2.amazonaws.com/pl_docs/pl_module_vid.m4v"></video>
+
+|
+
+As your project grows in complexity with things like 16-bit precision, distributed training, etc... the engineering part
 quickly becomes onerous and starts distracting from the core research code.
 
 ----------------
@@ -56,7 +61,6 @@ quickly becomes onerous and starts distracting from the core research code.
 ********************
 Lightning Philosophy
 ********************
-
 
 Lightning structures your deep learning code in to 3:
 
@@ -66,7 +70,6 @@ Lightning structures your deep learning code in to 3:
 
 Research code
 =============
-
 
 In the MNIST generation example, the research code would be the particular system and how it's trained (ie: A GAN or VAE).
 
@@ -102,13 +105,13 @@ over GPUs, 16-bit precision, etc. This is normally code that is THE SAME across 
 
     dist.barrier()
     
-In Lightning, this code is abstracted out by the `Trainer`.
+In Lightning, this code is abstracted out by the :class:`~pytorch_lightning.trainer.Trainer`.
 
 Non-essential code
 ==================
 
 This is code that helps the research but isn't relevant to the research code. Some examples might be:
-1. Inspect gradients
+1. Inspect gradients.
 2. Log to tensorboard.
 
 .. code-block:: python
@@ -131,24 +134,20 @@ Installing Lightning
 ====================
 
 
-Lightning is trivial to install. We reccomend using conda environments
+You can install using `pip <https://pypi.org/project/pytorch-lightning/>`_ 
 
 .. code-block:: bash
+    pip install pytorch-lightning
+    
+Or with `conda <https://anaconda.org/conda-forge/pytorch-lightning>`_ (see how to install conda `here <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`_):
 
+.. code-block:: bash
+    conda install pytorch-lightning -c conda-forge
+You could also use conda environments
+
+.. code-block:: bash
     conda activate my_env
     pip install pytorch-lightning
-
-Or without conda environments, use pip.
-
-.. code-block:: bash
-
-    pip install pytorch-lightning
-
-Or conda.
-
-.. code-block:: bash
-
-    conda install pytorch-lightning -c conda-forge
 
 
 
@@ -161,9 +160,7 @@ The Model
 The :class:`~pytorch_lightning.core.LightningModule` holds all the core research ingredients: 
  
 - The model
-
 - The optimizers
-
 - The train/ val/ test steps
 
 Let's first start with the model. In this case we'll design a 3-layer neural network.
@@ -228,8 +225,7 @@ equivalent to a pure PyTorch Module except it has added functionality. However, 
 Data
 ----
 
-
-Lightning operates on pure dataloaders. Here's the PyTorch code for loading MNIST.
+Lightning operates on pure dataloaders. Here's the PyTorch code for loading MNIST dataset.
 
 .. testcode::
     :skipif: not TORCHVISION_AVAILABLE
@@ -265,7 +261,7 @@ You can use DataLoaders in 3 ways:
 
 1. Pass DataLoaders to .fit()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Pass in the dataloaders to the `.fit()` function.
+Pass in the DataLoaders to the trainer`.fit()` function.
 
 .. code-block:: python
 
@@ -431,7 +427,7 @@ In Lightning we do the same but organize it under the configure_optimizers metho
         def configure_optimizers(self):
             return Adam(self.parameters(), lr=1e-3)
 
-.. note:: The LightningModule itself has the parameters, so pass in self.parameters()
+.. note:: The :class:`~pytorch_lightning.core.LightningModule` itself has the parameters, so pass in self.parameters()
 
 However, if you have multiple optimizers use the matching parameters
 
@@ -476,7 +472,7 @@ In the case of MNIST we do the following
             optimizer.zero_grad()
 
 In Lightning, everything that is in the training step gets organized under the `training_step` function
-in the LightningModule
+in the :class:`~pytorch_lightning.core.LightningModule`.
 
 .. testcode::
 
@@ -488,7 +484,7 @@ in the LightningModule
             loss = F.nll_loss(logits, y)
             return loss
 
-Again, this is the same PyTorch code except that it has been organized by the LightningModule.
+Again, this is the same PyTorch code except that it has been organized by the :class:`~pytorch_lightning.core.LightningModule`.
 This code is not restricted which means it can be as complicated as a full seq-2-seq, RL loop, GAN, etc...
 
 TrainResult
@@ -538,7 +534,7 @@ The engineering
 
 Training
 --------
-So far we defined 4 key ingredients in pure PyTorch but organized the code with the LightningModule.
+So far we defined 4 key ingredients in pure PyTorch but organized the code with the :class:`~pytorch_lightning.core.LightningModule`.
 
 1. Model.
 2. Training data.
@@ -547,7 +543,7 @@ So far we defined 4 key ingredients in pure PyTorch but organized the code with 
 
 |
 
-For clarity, we'll recall that the full LightningModule now looks like this.
+For clarity, we'll recall that the full :class:`~pytorch_lightning.core.LightningModule` now looks like this.
 
 .. code-block:: python
 
@@ -580,7 +576,7 @@ For clarity, we'll recall that the full LightningModule now looks like this.
 
             return result
 
-Again, this is the same PyTorch code, except that it's organized by the LightningModule. Now you can:
+Again, this is the same PyTorch code, except that it's organized by the :class:`~pytorch_lightning.core.LightningModule`. Now you can:
 
 Auto Logging
 ^^^^^^^^^^^^
@@ -738,7 +734,7 @@ once (ie: download or tokenize, etc...).
 
 .. note:: Lightning inserts the correct DistributedSampler for distributed training. No need to add yourself!
 
-Now we can train the LightningModule on a TPU without doing anything else!
+Now we can train the :class:`~pytorch_lightning.core.LightningModule` on a TPU without doing anything else!
 
 .. code-block:: python
 
@@ -908,7 +904,7 @@ You can also run the test from a saved lightning model
 
 Predicting
 ----------
-Again, a LightningModule is exactly the same as a PyTorch module. This means you can load it
+Again, a :class:`~pytorch_lightning.core.LightningModule` is exactly the same as a PyTorch module. This means you can load it
 and use it for prediction.
 
 .. code-block:: python
