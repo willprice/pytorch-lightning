@@ -13,6 +13,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Refactored accelerator backends:
+   * moved TPU `xxx_step` to backend ([#3118](https://github.com/PyTorchLightning/pytorch-lightning/pull/3118))
+   * refactored DDP backend `forward` ([#3119](https://github.com/PyTorchLightning/pytorch-lightning/pull/3119))
+   * refactored GPU backend `__step` ([#3120](https://github.com/PyTorchLightning/pytorch-lightning/pull/3120))
+   * refactored Horovod backend ([#3121](https://github.com/PyTorchLightning/pytorch-lightning/pull/3121), [#3122](https://github.com/PyTorchLightning/pytorch-lightning/pull/3122))
+   * remove obscure forward call in eval + CPU backend `___step` ([#3123](https://github.com/PyTorchLightning/pytorch-lightning/pull/3123))
+   * reduced all simplified forward ([#3126](https://github.com/PyTorchLightning/pytorch-lightning/pull/3126))
+   * added hook base method ([#3127](https://github.com/PyTorchLightning/pytorch-lightning/pull/3127))
+   * refactor eval loop to use hooks - use `test_mode` for if so we can split later ([#3129](https://github.com/PyTorchLightning/pytorch-lightning/pull/3129))
+   * moved `___step_end` hooks ([#3130](https://github.com/PyTorchLightning/pytorch-lightning/pull/3130))
+   * training forward refactor ([#3134](https://github.com/PyTorchLightning/pytorch-lightning/pull/3134))
+   * training AMP scaling refactor ([#3135](https://github.com/PyTorchLightning/pytorch-lightning/pull/3135))
+   * eval step scaling factor ([#3136](https://github.com/PyTorchLightning/pytorch-lightning/pull/3136))
+   * add eval loop object to streamline eval loop ([#3138](https://github.com/PyTorchLightning/pytorch-lightning/pull/3138))
+   * refactored dataloader process hook ([#3139](https://github.com/PyTorchLightning/pytorch-lightning/pull/3139))
+   * refactored inner eval loop ([#3141](https://github.com/PyTorchLightning/pytorch-lightning/pull/3141))
+   * final inner eval loop hooks ([#3154](https://github.com/PyTorchLightning/pytorch-lightning/pull/3154))
+   * clean up hooks in run_evaluation ([#3156](https://github.com/PyTorchLightning/pytorch-lightning/pull/3156))
+   * clean up data reset ([#3161](https://github.com/PyTorchLightning/pytorch-lightning/pull/3161))
+   * expand eval loop out ([#3165](https://github.com/PyTorchLightning/pytorch-lightning/pull/3165))
+
 
 ### Deprecated
 
@@ -29,6 +50,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed ONNX model save on GPU ([#3145](https://github.com/PyTorchLightning/pytorch-lightning/pull/3145))
 
 - Fixed `GpuUsageLogger` to work on different platforms ([#3008](https://github.com/PyTorchLightning/pytorch-lightning/pull/3008))
+
 
 ## [0.9.0] - YYYY-MM-DD
 
