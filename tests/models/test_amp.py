@@ -57,6 +57,12 @@ def test_amp_single_gpu_dp(tmpdir):
     )
 
     model = EvalModelTemplate()
+    model.training_step = model.training_step_result_obj_dp
+    model.training_step_end = None
+    model.training_epoch_end = None
+    model.validation_step = model.validation_step_result_obj_dp
+    model.validation_step_end = None
+    model.validation_epoch_end = None
     # tutils.run_model_test(trainer_options, model)
     result = trainer.fit(model)
 
@@ -96,6 +102,12 @@ def test_amp_multi_gpu_dp(tmpdir):
     )
 
     model = EvalModelTemplate()
+    model.training_step = model.training_step_result_obj_dp
+    model.training_step_end = None
+    model.training_epoch_end = None
+    model.validation_step = model.validation_step_result_obj_dp
+    model.validation_step_end = None
+    model.validation_epoch_end = None
     # tutils.run_model_test(trainer_options, model)
     result = trainer.fit(model)
 
