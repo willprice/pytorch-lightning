@@ -43,7 +43,6 @@ def test_multi_gpu_wandb_ddp_spawn(tmpdir):
     trainer.test(model)
 
 
-@pytest.mark.skip(reason='dp + amp not supported currently')  # TODO
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires GPU machine")
 def test_amp_single_gpu_dp(tmpdir):
     """Make sure DP/DDP + AMP work."""
@@ -83,7 +82,6 @@ def test_amp_single_gpu_ddp_spawn(tmpdir):
     assert result == 1
 
 
-@pytest.mark.skip(reason='dp + amp not supported currently')  # TODO
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires GPU machine")
 def test_amp_multi_gpu_dp(tmpdir):
     """Make sure DP/DDP + AMP work."""
