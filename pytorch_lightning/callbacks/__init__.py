@@ -5,6 +5,7 @@ from pytorch_lightning.callbacks.lr_logger import LearningRateLogger
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.callbacks.progress import ProgressBarBase, ProgressBar
 from pytorch_lightning.callbacks.gpu_stats_monitor import GPUStatsMonitor
+from pytorch_lightning.callbacks.gpu_usage_logger import GpuUsageLogger
 
 __all__ = [
     'Callback',
@@ -14,5 +15,6 @@ __all__ = [
     'LearningRateLogger',
     'ProgressBarBase',
     'ProgressBar',
-    'GPUStatsMonitor'
+    'GPUStatsMonitor',
+    'GpuUsageLogger',
 ]
