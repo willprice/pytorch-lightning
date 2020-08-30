@@ -314,7 +314,7 @@ def test_full_loop_ddp_spawn(tmpdir):
     result = trainer.fit(model, dm)
     assert result == 1
 
-    # seed_everything(1234)
+    seed_everything(1234)
 
     # test
     result = trainer.test(datamodule=dm)
