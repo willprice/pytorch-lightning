@@ -72,7 +72,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed invalid paths when remote logging with TensorBoard ([#3236](https://github.com/PyTorchLightning/pytorch-lightning/pull/3236))
 
 
-## [0.9.0] - YYYY-MM-DD
+## [0.9.0] - 2020-08-20
 
 ### Added
 
